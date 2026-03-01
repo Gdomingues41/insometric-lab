@@ -10,8 +10,6 @@ body { font-family: Arial; padding: 20px; }
 input, select { padding: 6px; margin: 5px 0; width: 100%; }
 button { padding: 8px 12px; margin-top: 10px; cursor: pointer; }
 
-.resultado { font-weight: bold; margin-top: 10px; }
-
 .tabela { margin-top: 20px; border-collapse: collapse; width: 100%; }
 .tabela th, .tabela td {
   border: 1px solid #ccc;
@@ -19,18 +17,10 @@ button { padding: 8px 12px; margin-top: 10px; cursor: pointer; }
   text-align: center;
 }
 
-.nc {
-  background-color: #ffdddd;
-  font-weight: bold;
-}
-.ok {
-  background-color: #ddffdd;
-}
-
-.resumo {
-  margin-top: 10px;
-  font-weight: bold;
-}
+.nc { background-color: #ffdddd; font-weight: bold; }
+.ok { background-color: #ddffdd; }
+.resumo { margin-top: 10px; font-weight: bold; }
+img { max-width: 80px; }
 </style>
 
 </head>
@@ -53,9 +43,14 @@ button { padding: 8px 12px; margin-top: 10px; cursor: pointer; }
   <option value="Presença significativa">Presença significativa</option>
 </select>
 
-<button onclick="calcular()">Calcular</button>
+<label>Foto Membrana:</label>
+<input type="file" id="fotoMembrana" accept="image/*" capture="environment">
 
-<div id="resultado" class="resultado"></div>
+<label>Foto Béquer:</label>
+<input type="file" id="fotoBequer" accept="image/*" capture="environment">
+
+<button onclick="calcular()">Calcular</button>
+<div id="resultado"></div>
 
 <button onclick="salvarAmostra()">Salvar Amostra</button>
 
@@ -67,9 +62,9 @@ button { padding: 8px 12px; margin-top: 10px; cursor: pointer; }
 <thead>
 <tr>
 <th>Data</th>
-<th>Resultado (mg/kg)</th>
+<th>Resultado</th>
 <th>Status</th>
-<th>Observação</th>
+<th>Fotos</th>
 </tr>
 </thead>
 <tbody id="listaAmostras"></tbody>
@@ -81,24 +76,18 @@ button { padding: 8px 12px; margin-top: 10px; cursor: pointer; }
 <script type="module">
 
 import { auth, db } from "./js/firebase-config.js";
+import { getStorage, ref, uploadBytes, getDownloadURL }
+from "https://www.gstatic.com/firebasejs/12.10.0/firebase-storage.js";
 import { onAuthStateChanged }
 from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import {
-doc,
-getDoc,
-collection,
-addDoc,
-serverTimestamp,
-getDocs,
-updateDoc
+doc, getDoc, collection, addDoc,
+serverTimestamp, getDocs, updateDoc
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
+const storage = getStorage();
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
-
-const info = document.getElementById("info");
-const lista = document.getElementById("listaAmostras");
-const resumo = document.getElementById("resumo");
 
 let limiteAtual = 0;
 let resultadoCalculado = null;
@@ -111,27 +100,18 @@ window.location.href = "login.html";
 return;
 }
 
-const docRef = doc(db, "mapeamentos", id);
-const docSnap = await getDoc(docRef);
-
-if (docSnap.exists()) {
+const docSnap = await getDoc(doc(db, "mapeamentos", id));
+if (!docSnap.exists()) return;
 
 const data = docSnap.data();
 limiteAtual = data.limite;
 
-info.innerHTML = `
-<strong>Armazém:</strong> ${data.armazem}<br>
+document.getElementById("info").innerHTML =
+`<strong>Armazém:</strong> ${data.armazem}<br>
 <strong>Cliente:</strong> ${data.cliente}<br>
-<strong>Limite:</strong> ${data.limite} mg/kg<br>
-<strong>Analista:</strong> ${data.analista}<br>
-<strong>Status:</strong> ${data.status}
-`;
+<strong>Limite:</strong> ${data.limite} mg/kg`;
 
 carregarAmostras();
-
-} else {
-info.innerHTML = "Mapeamento não encontrado.";
-}
 
 });
 
@@ -141,38 +121,52 @@ const pi = parseFloat(document.getElementById("pesoInicial").value);
 const pf = parseFloat(document.getElementById("pesoFinal").value);
 const massa = parseFloat(document.getElementById("massa").value);
 
-if (isNaN(pi) || isNaN(pf) || isNaN(massa)) {
-alert("Preencha todos os campos corretamente.");
-return;
-}
+if (isNaN(pi) || isNaN(pf) || isNaN(massa)) return;
 
-const residuo = pf - pi;
-
-resultadoCalculado = Math.round((residuo * 1000000) / massa);
-
+resultadoCalculado = Math.round(((pf - pi) * 1000000) / massa);
 statusCalculado = resultadoCalculado > limiteAtual
 ? "Não Conforme"
 : "Conforme";
 
 document.getElementById("resultado").innerHTML =
 `Resultado: ${resultadoCalculado} mg/kg → ${statusCalculado}`;
+
 };
 
 window.salvarAmostra = async function() {
 
-if (resultadoCalculado === null) {
-alert("Calcule antes de salvar.");
-return;
-}
+if (resultadoCalculado === null) return;
 
-await addDoc(collection(db, "mapeamentos", id, "amostras"), {
-pesoInicial: parseFloat(document.getElementById("pesoInicial").value),
-pesoFinal: parseFloat(document.getElementById("pesoFinal").value),
-massa: parseFloat(document.getElementById("massa").value),
+const docRef = await addDoc(
+collection(db, "mapeamentos", id, "amostras"),
+{
+pesoInicial: parseFloat(pesoInicial.value),
+pesoFinal: parseFloat(pesoFinal.value),
+massa: parseFloat(massa.value),
 resultadoMgKg: resultadoCalculado,
 status: statusCalculado,
-observacao: document.getElementById("observacao").value,
 criadoEm: serverTimestamp()
+});
+
+const amostraId = docRef.id;
+
+async function uploadFoto(inputId, nomeArquivo) {
+const file = document.getElementById(inputId).files[0];
+if (!file) return null;
+
+const storageRef = ref(storage,
+`mapeamentos/${id}/amostras/${amostraId}/${nomeArquivo}`);
+
+await uploadBytes(storageRef, file);
+return await getDownloadURL(storageRef);
+}
+
+const urlMembrana = await uploadFoto("fotoMembrana", "membrana.jpg");
+const urlBequer = await uploadFoto("fotoBequer", "bequer.jpg");
+
+await updateDoc(docRef, {
+fotoMembrana: urlMembrana,
+fotoBequer: urlBequer
 });
 
 if (statusCalculado === "Não Conforme") {
@@ -181,61 +175,37 @@ possuiNC: true
 });
 }
 
-document.getElementById("pesoInicial").value = "";
-document.getElementById("pesoFinal").value = "";
-document.getElementById("massa").value = 125;
-document.getElementById("resultado").innerHTML = "";
-
-resultadoCalculado = null;
-
 carregarAmostras();
+resultadoCalculado = null;
 };
 
 async function carregarAmostras() {
 
+const snapshot = await getDocs(
+collection(db, "mapeamentos", id, "amostras"));
+
+const lista = document.getElementById("listaAmostras");
 lista.innerHTML = "";
 
-const snapshot = await getDocs(collection(db, "mapeamentos", id, "amostras"));
-
-let total = 0;
-let totalNC = 0;
-
 snapshot.forEach(docSnap => {
-
-const data = docSnap.data();
-total++;
-
-let status = data.status;
-
-// Corrige registros antigos
-if (!status) {
-status = data.resultadoMgKg > limiteAtual
-? "Não Conforme"
-: "Conforme";
-}
-
-if (status === "Não Conforme") totalNC++;
-
-const classe = status === "Não Conforme" ? "nc" : "ok";
+const d = docSnap.data();
+const classe = d.status === "Não Conforme" ? "nc" : "ok";
 
 lista.innerHTML += `
 <tr class="${classe}">
-<td>${data.criadoEm?.toDate().toLocaleString() || "-"}</td>
-<td>${data.resultadoMgKg}</td>
-<td>${status}</td>
-<td>${data.observacao}</td>
-</tr>
-`;
-
+<td>${d.criadoEm?.toDate().toLocaleString() || "-"}</td>
+<td>${d.resultadoMgKg}</td>
+<td>${d.status}</td>
+<td>
+${d.fotoMembrana ? `<a href="${d.fotoMembrana}" target="_blank">Membrana</a>` : ""}
+${d.fotoBequer ? `<br><a href="${d.fotoBequer}" target="_blank">Béquer</a>` : ""}
+</td>
+</tr>`;
 });
 
-resumo.innerHTML =
-`Total de Análises: ${total} | Não Conformes: ${totalNC}`;
 }
 
-window.voltar = function() {
-window.location.href = "dashboard.html";
-};
+window.voltar = () => window.location.href = "dashboard.html";
 
 </script>
 
