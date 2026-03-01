@@ -5,9 +5,9 @@
   <title>Dashboard - InsoMetric</title>
   <style>
     body { font-family: Arial; padding: 20px; }
-    button { padding: 8px 12px; margin: 5px 0; }
+    button { padding: 8px 12px; margin: 5px 0; cursor: pointer; }
     input, select { padding: 6px; margin: 5px 0; width: 100%; }
-    .card { border: 1px solid #ccc; padding: 10px; margin: 5px 0; }
+    .card { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
     .form-box { border: 1px solid #aaa; padding: 15px; margin-bottom: 20px; }
   </style>
 </head>
@@ -99,19 +99,28 @@
       const q = query(collection(db, "mapeamentos"), orderBy("criadoEm", "desc"));
       const snapshot = await getDocs(q);
 
-      snapshot.forEach(doc => {
-        const data = doc.data();
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const id = docSnap.id;
+
         lista.innerHTML += `
           <div class="card">
             <strong>${data.armazem}</strong><br>
             Cliente: ${data.cliente}<br>
             Limite: ${data.limite} mg/kg<br>
             Analista: ${data.analista}<br>
-            Status: ${data.status}
+            Status: ${data.status}<br><br>
+            <button onclick="abrirMapeamento('${id}')">
+              Abrir Análises
+            </button>
           </div>
         `;
       });
     }
+
+    window.abrirMapeamento = function(id) {
+      window.location.href = `amostras.html?id=${id}`;
+    };
   </script>
 
 </body>
