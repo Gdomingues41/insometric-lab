@@ -9,7 +9,28 @@ body { font-family: Arial; padding: 20px; }
 .box { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; }
 input, select { padding: 6px; margin: 5px 0; width: 100%; }
 button { padding: 8px 12px; margin-top: 10px; cursor: pointer; }
+
 .resultado { font-weight: bold; margin-top: 10px; }
+
+.tabela { margin-top: 20px; border-collapse: collapse; width: 100%; }
+.tabela th, .tabela td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+}
+
+.nc {
+  background-color: #ffdddd;
+  font-weight: bold;
+}
+.ok {
+  background-color: #ddffdd;
+}
+
+.resumo {
+  margin-top: 10px;
+  font-weight: bold;
+}
 </style>
 
 </head>
@@ -40,6 +61,21 @@ button { padding: 8px 12px; margin-top: 10px; cursor: pointer; }
 
 </div>
 
+<div id="resumo" class="resumo"></div>
+
+<table class="tabela">
+<thead>
+<tr>
+<th>Data</th>
+<th>Resultado (mg/kg)</th>
+<th>Status</th>
+<th>Observação</th>
+</tr>
+</thead>
+<tbody id="listaAmostras"></tbody>
+</table>
+
+<br>
 <button onclick="voltar()">Voltar</button>
 
 <script type="module">
@@ -52,20 +88,27 @@ doc,
 getDoc,
 collection,
 addDoc,
-serverTimestamp
+serverTimestamp,
+getDocs,
+updateDoc
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
 const info = document.getElementById("info");
+const lista = document.getElementById("listaAmostras");
+const resumo = document.getElementById("resumo");
+
 let limiteAtual = 0;
 let resultadoCalculado = 0;
+let statusCalculado = "";
 
 onAuthStateChanged(auth, async (user) => {
 if (!user) {
 window.location.href = "login.html";
-} else {
+return;
+}
 
 const docRef = doc(db, "mapeamentos", id);
 const docSnap = await getDoc(docRef);
@@ -81,7 +124,8 @@ info.innerHTML = `
 <strong>Analista:</strong> ${data.analista}<br>
 <strong>Status:</strong> ${data.status}
 `;
-}
+
+carregarAmostras();
 }
 });
 
@@ -97,17 +141,12 @@ return;
 }
 
 const residuo = pf - pi;
-
 resultadoCalculado = Math.round((residuo * 1000000) / massa);
 
-let status = "Conforme";
-if (resultadoCalculado > limiteAtual) {
-status = "Não Conforme";
-}
+statusCalculado = resultadoCalculado > limiteAtual ? "Não Conforme" : "Conforme";
 
 document.getElementById("resultado").innerHTML =
-`Resultado: ${resultadoCalculado} mg/kg → ${status}`;
-
+`Resultado: ${resultadoCalculado} mg/kg → ${statusCalculado}`;
 };
 
 window.salvarAmostra = async function() {
@@ -122,11 +161,16 @@ pesoInicial: parseFloat(document.getElementById("pesoInicial").value),
 pesoFinal: parseFloat(document.getElementById("pesoFinal").value),
 massa: parseFloat(document.getElementById("massa").value),
 resultadoMgKg: resultadoCalculado,
+status: statusCalculado,
 observacao: document.getElementById("observacao").value,
 criadoEm: serverTimestamp()
 });
 
-alert("Amostra salva com sucesso!");
+if (statusCalculado === "Não Conforme") {
+await updateDoc(doc(db, "mapeamentos", id), {
+possuiNC: true
+});
+}
 
 document.getElementById("pesoInicial").value = "";
 document.getElementById("pesoFinal").value = "";
@@ -135,7 +179,39 @@ document.getElementById("resultado").innerHTML = "";
 
 resultadoCalculado = 0;
 
+carregarAmostras();
 };
+
+async function carregarAmostras() {
+
+lista.innerHTML = "";
+
+const snapshot = await getDocs(collection(db, "mapeamentos", id, "amostras"));
+
+let total = 0;
+let totalNC = 0;
+
+snapshot.forEach(docSnap => {
+const data = docSnap.data();
+total++;
+
+if (data.status === "Não Conforme") totalNC++;
+
+const classe = data.status === "Não Conforme" ? "nc" : "ok";
+
+lista.innerHTML += `
+<tr class="${classe}">
+<td>${data.criadoEm?.toDate().toLocaleString() || "-"}</td>
+<td>${data.resultadoMgKg}</td>
+<td>${data.status}</td>
+<td>${data.observacao}</td>
+</tr>
+`;
+});
+
+resumo.innerHTML =
+`Total de Análises: ${total} | Não Conformes: ${totalNC}`;
+}
 
 window.voltar = function() {
 window.location.href = "dashboard.html";
