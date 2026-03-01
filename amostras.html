@@ -101,10 +101,11 @@ const lista = document.getElementById("listaAmostras");
 const resumo = document.getElementById("resumo");
 
 let limiteAtual = 0;
-let resultadoCalculado = 0;
+let resultadoCalculado = null;
 let statusCalculado = "";
 
 onAuthStateChanged(auth, async (user) => {
+
 if (!user) {
 window.location.href = "login.html";
 return;
@@ -114,6 +115,7 @@ const docRef = doc(db, "mapeamentos", id);
 const docSnap = await getDoc(docRef);
 
 if (docSnap.exists()) {
+
 const data = docSnap.data();
 limiteAtual = data.limite;
 
@@ -126,7 +128,11 @@ info.innerHTML = `
 `;
 
 carregarAmostras();
+
+} else {
+info.innerHTML = "Mapeamento não encontrado.";
 }
+
 });
 
 window.calcular = function() {
@@ -141,9 +147,12 @@ return;
 }
 
 const residuo = pf - pi;
+
 resultadoCalculado = Math.round((residuo * 1000000) / massa);
 
-statusCalculado = resultadoCalculado > limiteAtual ? "Não Conforme" : "Conforme";
+statusCalculado = resultadoCalculado > limiteAtual
+? "Não Conforme"
+: "Conforme";
 
 document.getElementById("resultado").innerHTML =
 `Resultado: ${resultadoCalculado} mg/kg → ${statusCalculado}`;
@@ -151,7 +160,7 @@ document.getElementById("resultado").innerHTML =
 
 window.salvarAmostra = async function() {
 
-if (!resultadoCalculado) {
+if (resultadoCalculado === null) {
 alert("Calcule antes de salvar.");
 return;
 }
@@ -177,7 +186,7 @@ document.getElementById("pesoFinal").value = "";
 document.getElementById("massa").value = 125;
 document.getElementById("resultado").innerHTML = "";
 
-resultadoCalculado = 0;
+resultadoCalculado = null;
 
 carregarAmostras();
 };
@@ -192,21 +201,32 @@ let total = 0;
 let totalNC = 0;
 
 snapshot.forEach(docSnap => {
+
 const data = docSnap.data();
 total++;
 
-if (data.status === "Não Conforme") totalNC++;
+let status = data.status;
 
-const classe = data.status === "Não Conforme" ? "nc" : "ok";
+// Corrige registros antigos
+if (!status) {
+status = data.resultadoMgKg > limiteAtual
+? "Não Conforme"
+: "Conforme";
+}
+
+if (status === "Não Conforme") totalNC++;
+
+const classe = status === "Não Conforme" ? "nc" : "ok";
 
 lista.innerHTML += `
 <tr class="${classe}">
 <td>${data.criadoEm?.toDate().toLocaleString() || "-"}</td>
 <td>${data.resultadoMgKg}</td>
-<td>${data.status}</td>
+<td>${status}</td>
 <td>${data.observacao}</td>
 </tr>
 `;
+
 });
 
 resumo.innerHTML =
