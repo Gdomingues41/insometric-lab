@@ -6,5 +6,26 @@
 </head>
 <body>
   <h1>Login realizado com sucesso 🚀</h1>
+
+  <button onclick="logout()">Sair</button>
+
+  <script type="module">
+    import { auth } from "./js/firebase-config.js";
+    import { onAuthStateChanged, signOut } 
+      from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+      }
+    });
+
+    window.logout = function() {
+      signOut(auth).then(() => {
+        window.location.href = "login.html";
+      });
+    };
+  </script>
+
 </body>
 </html>
