@@ -6,18 +6,36 @@
   <style>
     body { font-family: Arial; padding: 20px; }
     button { padding: 8px 12px; margin: 5px 0; }
+    input, select { padding: 6px; margin: 5px 0; width: 100%; }
     .card { border: 1px solid #ccc; padding: 10px; margin: 5px 0; }
+    .form-box { border: 1px solid #aaa; padding: 15px; margin-bottom: 20px; }
   </style>
 </head>
 <body>
 
   <h2>InsoMetric - Mapeamentos</h2>
 
-  <button onclick="criarMapeamento()">➕ Novo Mapeamento</button>
+  <div class="form-box">
+    <h3>Novo Mapeamento</h3>
+
+    <input type="text" id="armazem" placeholder="Nome do Armazém">
+    <input type="text" id="cliente" placeholder="Cliente">
+    
+    <select id="limite">
+      <option value="250">250 mg/kg</option>
+      <option value="500">500 mg/kg</option>
+    </select>
+
+    <input type="text" id="analista" placeholder="Nome do Analista">
+
+    <button onclick="criarMapeamento()">Salvar Mapeamento</button>
+  </div>
+
   <button onclick="logout()">Sair</button>
 
   <hr>
 
+  <h3>Mapeamentos Ativos</h3>
   <div id="lista"></div>
 
   <script type="module">
@@ -50,14 +68,28 @@
     };
 
     window.criarMapeamento = async function() {
-      const nome = prompt("Nome do Armazém:");
-      if (!nome) return;
+      const armazem = document.getElementById("armazem").value;
+      const cliente = document.getElementById("cliente").value;
+      const limite = parseInt(document.getElementById("limite").value);
+      const analista = document.getElementById("analista").value;
+
+      if (!armazem || !cliente || !analista) {
+        alert("Preencha todos os campos.");
+        return;
+      }
 
       await addDoc(collection(db, "mapeamentos"), {
-        armazem: nome,
+        armazem,
+        cliente,
+        limite,
+        analista,
         criadoEm: serverTimestamp(),
         status: "ativo"
       });
+
+      document.getElementById("armazem").value = "";
+      document.getElementById("cliente").value = "";
+      document.getElementById("analista").value = "";
 
       carregarMapeamentos();
     };
@@ -72,6 +104,9 @@
         lista.innerHTML += `
           <div class="card">
             <strong>${data.armazem}</strong><br>
+            Cliente: ${data.cliente}<br>
+            Limite: ${data.limite} mg/kg<br>
+            Analista: ${data.analista}<br>
             Status: ${data.status}
           </div>
         `;
