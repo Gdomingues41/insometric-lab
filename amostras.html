@@ -1,67 +1,147 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Amostras - InsoMetric</title>
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    .box { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; }
-    button { padding: 8px 12px; margin-top: 10px; cursor: pointer; }
-  </style>
+<meta charset="UTF-8">
+<title>Amostras - InsoMetric</title>
+
+<style>
+body { font-family: Arial; padding: 20px; }
+.box { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; }
+input, select { padding: 6px; margin: 5px 0; width: 100%; }
+button { padding: 8px 12px; margin-top: 10px; cursor: pointer; }
+.resultado { font-weight: bold; margin-top: 10px; }
+</style>
+
 </head>
 <body>
 
-  <h2>InsoMetric - Análises do Mapeamento</h2>
+<h2>InsoMetric - Análises do Mapeamento</h2>
 
-  <div id="info" class="box"></div>
+<div id="info" class="box"></div>
 
-  <button onclick="voltar()">Voltar</button>
+<div class="box">
+<h3>Nova Amostra</h3>
 
-  <script type="module">
-    import { auth, db } from "./js/firebase-config.js";
-    import { onAuthStateChanged }
-      from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-    import {
-      doc,
-      getDoc
-    } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+<input type="number" step="0.0001" id="pesoInicial" placeholder="Peso Inicial Membrana (g)">
+<input type="number" step="0.0001" id="pesoFinal" placeholder="Peso Final Membrana (g)">
+<input type="number" step="0.01" id="massa" value="125" placeholder="Massa analisada (g)">
 
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
+<select id="observacao">
+  <option value="Ausente">Ausente</option>
+  <option value="Verde discreto">Verde discreto</option>
+  <option value="Presença significativa">Presença significativa</option>
+</select>
 
-    const info = document.getElementById("info");
+<button onclick="calcular()">Calcular</button>
 
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.href = "login.html";
-      } else {
-        if (!id) {
-          info.innerHTML = "Mapeamento não encontrado.";
-          return;
-        }
+<div id="resultado" class="resultado"></div>
 
-        const docRef = doc(db, "mapeamentos", id);
-        const docSnap = await getDoc(docRef);
+<button onclick="salvarAmostra()">Salvar Amostra</button>
 
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          info.innerHTML = `
-            <strong>Armazém:</strong> ${data.armazem}<br>
-            <strong>Cliente:</strong> ${data.cliente}<br>
-            <strong>Limite:</strong> ${data.limite} mg/kg<br>
-            <strong>Analista:</strong> ${data.analista}<br>
-            <strong>Status:</strong> ${data.status}
-          `;
-        } else {
-          info.innerHTML = "Mapeamento não encontrado.";
-        }
-      }
-    });
+</div>
 
-    window.voltar = function() {
-      window.location.href = "dashboard.html";
-    };
-  </script>
+<button onclick="voltar()">Voltar</button>
+
+<script type="module">
+
+import { auth, db } from "./js/firebase-config.js";
+import { onAuthStateChanged }
+from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import {
+doc,
+getDoc,
+collection,
+addDoc,
+serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
+
+const info = document.getElementById("info");
+let limiteAtual = 0;
+let resultadoCalculado = 0;
+
+onAuthStateChanged(auth, async (user) => {
+if (!user) {
+window.location.href = "login.html";
+} else {
+
+const docRef = doc(db, "mapeamentos", id);
+const docSnap = await getDoc(docRef);
+
+if (docSnap.exists()) {
+const data = docSnap.data();
+limiteAtual = data.limite;
+
+info.innerHTML = `
+<strong>Armazém:</strong> ${data.armazem}<br>
+<strong>Cliente:</strong> ${data.cliente}<br>
+<strong>Limite:</strong> ${data.limite} mg/kg<br>
+<strong>Analista:</strong> ${data.analista}<br>
+<strong>Status:</strong> ${data.status}
+`;
+}
+}
+});
+
+window.calcular = function() {
+
+const pi = parseFloat(document.getElementById("pesoInicial").value);
+const pf = parseFloat(document.getElementById("pesoFinal").value);
+const massa = parseFloat(document.getElementById("massa").value);
+
+if (isNaN(pi) || isNaN(pf) || isNaN(massa)) {
+alert("Preencha todos os campos corretamente.");
+return;
+}
+
+const residuo = pf - pi;
+
+resultadoCalculado = Math.round((residuo * 1000000) / massa);
+
+let status = "Conforme";
+if (resultadoCalculado > limiteAtual) {
+status = "Não Conforme";
+}
+
+document.getElementById("resultado").innerHTML =
+`Resultado: ${resultadoCalculado} mg/kg → ${status}`;
+
+};
+
+window.salvarAmostra = async function() {
+
+if (!resultadoCalculado) {
+alert("Calcule antes de salvar.");
+return;
+}
+
+await addDoc(collection(db, "mapeamentos", id, "amostras"), {
+pesoInicial: parseFloat(document.getElementById("pesoInicial").value),
+pesoFinal: parseFloat(document.getElementById("pesoFinal").value),
+massa: parseFloat(document.getElementById("massa").value),
+resultadoMgKg: resultadoCalculado,
+observacao: document.getElementById("observacao").value,
+criadoEm: serverTimestamp()
+});
+
+alert("Amostra salva com sucesso!");
+
+document.getElementById("pesoInicial").value = "";
+document.getElementById("pesoFinal").value = "";
+document.getElementById("massa").value = 125;
+document.getElementById("resultado").innerHTML = "";
+
+resultadoCalculado = 0;
+
+};
+
+window.voltar = function() {
+window.location.href = "dashboard.html";
+};
+
+</script>
 
 </body>
 </html>
