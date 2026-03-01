@@ -1,127 +1,232 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard - InsoMetric</title>
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    button { padding: 8px 12px; margin: 5px 0; cursor: pointer; }
-    input, select { padding: 6px; margin: 5px 0; width: 100%; }
-    .card { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
-    .form-box { border: 1px solid #aaa; padding: 15px; margin-bottom: 20px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InsoMetric - Painel Industrial</title>
+
+<style>
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 15px;
+  background-color: #121212;
+  color: #EAEAEA;
+}
+
+h2 {
+  font-size: 22px;
+  margin-bottom: 15px;
+  color: #ffffff;
+}
+
+h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #ffffff;
+}
+
+.box {
+  background: #2A2F38;
+  padding: 18px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+input, select {
+  width: 100%;
+  padding: 14px;
+  margin: 8px 0;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background-color: #1C1F26;
+  color: white;
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  margin-top: 12px;
+  cursor: pointer;
+  background-color: #0B3D91;
+  color: white;
+  font-weight: bold;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.card {
+  background: #2A2F38;
+  padding: 18px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.card strong {
+  font-size: 18px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.status-nc {
+  border-left: 6px solid #E74C3C;
+}
+
+.status-ok {
+  border-left: 6px solid #2ECC71;
+}
+
+.logout-btn {
+  background-color: #444;
+}
+
+@media (min-width: 768px) {
+
+  body {
+    max-width: 900px;
+    margin: auto;
+  }
+
+  button {
+    width: auto;
+    padding: 12px 20px;
+  }
+
+}
+
+</style>
 </head>
+
 <body>
 
-  <h2>InsoMetric - Mapeamentos</h2>
+<h2>📦 InsoMetric - Painel do Dia</h2>
 
-  <div class="form-box">
-    <h3>Novo Mapeamento</h3>
+<div class="box">
+<h3>➕ Novo Mapeamento</h3>
 
-    <input type="text" id="armazem" placeholder="Nome do Armazém">
-    <input type="text" id="cliente" placeholder="Cliente">
-    
-    <select id="limite">
-      <option value="250">250 mg/kg</option>
-      <option value="500">500 mg/kg</option>
-    </select>
+<input type="text" id="armazem" placeholder="Nome do Armazém">
+<input type="text" id="cliente" placeholder="Cliente">
 
-    <input type="text" id="analista" placeholder="Nome do Analista">
+<select id="limite">
+  <option value="250">250 mg/kg</option>
+  <option value="500">500 mg/kg</option>
+</select>
 
-    <button onclick="criarMapeamento()">Salvar Mapeamento</button>
-  </div>
+<input type="text" id="analista" placeholder="Nome do Analista">
 
-  <button onclick="logout()">Sair</button>
+<button onclick="criarMapeamento()">Salvar Mapeamento</button>
+</div>
 
-  <hr>
+<button class="logout-btn" onclick="logout()">🚪 Sair</button>
 
-  <h3>Mapeamentos Ativos</h3>
-  <div id="lista"></div>
+<h3>📊 Mapeamentos Ativos</h3>
+<div id="lista"></div>
 
-  <script type="module">
-    import { auth, db } from "./js/firebase-config.js";
-    import { onAuthStateChanged, signOut }
-      from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-    import {
-      collection,
-      addDoc,
-      getDocs,
-      query,
-      orderBy,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+<script type="module">
 
-    const lista = document.getElementById("lista");
+import { auth, db } from "./js/firebase-config.js";
+import { onAuthStateChanged, signOut }
+from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import {
+collection,
+addDoc,
+getDocs,
+query,
+orderBy,
+serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.href = "login.html";
-      } else {
-        carregarMapeamentos();
-      }
-    });
+const lista = document.getElementById("lista");
 
-    window.logout = function() {
-      signOut(auth).then(() => {
-        window.location.href = "login.html";
-      });
-    };
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "login.html";
+  } else {
+    carregarMapeamentos();
+  }
+});
 
-    window.criarMapeamento = async function() {
-      const armazem = document.getElementById("armazem").value;
-      const cliente = document.getElementById("cliente").value;
-      const limite = parseInt(document.getElementById("limite").value);
-      const analista = document.getElementById("analista").value;
+window.logout = function() {
+  signOut(auth).then(() => {
+    window.location.href = "login.html";
+  });
+};
 
-      if (!armazem || !cliente || !analista) {
-        alert("Preencha todos os campos.");
-        return;
-      }
+window.criarMapeamento = async function() {
 
-      await addDoc(collection(db, "mapeamentos"), {
-        armazem,
-        cliente,
-        limite,
-        analista,
-        criadoEm: serverTimestamp(),
-        status: "ativo"
-      });
+  const armazem = document.getElementById("armazem").value;
+  const cliente = document.getElementById("cliente").value;
+  const limite = parseInt(document.getElementById("limite").value);
+  const analista = document.getElementById("analista").value;
 
-      document.getElementById("armazem").value = "";
-      document.getElementById("cliente").value = "";
-      document.getElementById("analista").value = "";
+  if (!armazem || !cliente || !analista) {
+    alert("Preencha todos os campos.");
+    return;
+  }
 
-      carregarMapeamentos();
-    };
+  await addDoc(collection(db, "mapeamentos"), {
+    armazem,
+    cliente,
+    limite,
+    analista,
+    criadoEm: serverTimestamp(),
+    status: "ativo",
+    possuiNC: false
+  });
 
-    async function carregarMapeamentos() {
-      lista.innerHTML = "";
-      const q = query(collection(db, "mapeamentos"), orderBy("criadoEm", "desc"));
-      const snapshot = await getDocs(q);
+  document.getElementById("armazem").value = "";
+  document.getElementById("cliente").value = "";
+  document.getElementById("analista").value = "";
 
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        const id = docSnap.id;
+  carregarMapeamentos();
+};
 
-        lista.innerHTML += `
-          <div class="card">
-            <strong>${data.armazem}</strong><br>
-            Cliente: ${data.cliente}<br>
-            Limite: ${data.limite} mg/kg<br>
-            Analista: ${data.analista}<br>
-            Status: ${data.status}<br><br>
-            <button onclick="abrirMapeamento('${id}')">
-              Abrir Análises
-            </button>
-          </div>
-        `;
-      });
-    }
+async function carregarMapeamentos() {
 
-    window.abrirMapeamento = function(id) {
-      window.location.href = `amostras.html?id=${id}`;
-    };
-  </script>
+  lista.innerHTML = "";
+
+  const q = query(collection(db, "mapeamentos"), orderBy("criadoEm", "desc"));
+  const snapshot = await getDocs(q);
+
+  snapshot.forEach(docSnap => {
+
+    const data = docSnap.data();
+    const id = docSnap.id;
+
+    const classe = data.possuiNC ? "status-nc" : "status-ok";
+
+    lista.innerHTML += `
+      <div class="card ${classe}">
+        <strong>${data.armazem}</strong>
+        Cliente: ${data.cliente}<br>
+        Limite: ${data.limite} mg/kg<br>
+        Analista: ${data.analista}<br>
+        Status: ${data.status}<br><br>
+
+        <button onclick="abrirMapeamento('${id}')">
+          Abrir Análises
+        </button>
+      </div>
+    `;
+  });
+}
+
+window.abrirMapeamento = function(id) {
+  window.location.href = \`amostras.html?id=\${id}\`;
+};
+
+</script>
 
 </body>
 </html>
