@@ -7,6 +7,18 @@
 
 <style>
 
+/* ===== RESET ===== */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* ===== VARIÁVEIS TEMA ===== */
 :root {
   --bg: #121212;
   --card: #2A2F38;
@@ -25,17 +37,26 @@ body.light {
   --primary: #1B4F72;
 }
 
+/* ===== BASE ===== */
 body {
   font-family: Arial, sans-serif;
-  margin: 0;
   padding: 15px;
   background-color: var(--bg);
   color: var(--text);
   transition: 0.3s;
 }
 
-h2, h3 { color: var(--text); }
+h2 {
+  font-size: 22px;
+  margin-bottom: 15px;
+}
 
+h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+/* ===== CARDS ===== */
 .box, .card {
   background: var(--card);
   padding: 18px;
@@ -44,7 +65,8 @@ h2, h3 { color: var(--text); }
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
 
-input, select {
+/* ===== INPUTS ===== */
+input {
   width: 100%;
   padding: 14px;
   margin: 8px 0;
@@ -55,6 +77,7 @@ input, select {
   color: var(--text);
 }
 
+/* ===== BOTÕES ===== */
 button {
   width: 100%;
   padding: 14px;
@@ -68,16 +91,31 @@ button {
   font-weight: bold;
 }
 
+button:hover {
+  opacity: 0.9;
+}
+
 .toggle {
   background-color: #555;
 }
 
+.logout {
+  background-color: #444;
+}
+
+/* ===== STATUS ===== */
 .status-nc { border-left: 6px solid #E74C3C; }
 .status-ok { border-left: 6px solid #2ECC71; }
 
+/* ===== DESKTOP ===== */
 @media (min-width: 768px) {
-  body { max-width: 900px; margin: auto; }
-  button { width: auto; }
+  body {
+    max-width: 900px;
+    margin: auto;
+  }
+  button {
+    width: auto;
+  }
 }
 
 </style>
@@ -95,17 +133,14 @@ button {
 <input type="text" id="armazem" placeholder="Nome do Armazém">
 <input type="text" id="cliente" placeholder="Cliente">
 
-<select id="limite">
-  <option value="250">250 mg/kg</option>
-  <option value="500">500 mg/kg</option>
-</select>
+<input type="number" id="limite" placeholder="Limite mg/kg (ex: 125)">
 
 <input type="text" id="analista" placeholder="Nome do Analista">
 
 <button onclick="criarMapeamento()">Salvar Mapeamento</button>
 </div>
 
-<button onclick="logout()">🚪 Sair</button>
+<button class="logout" onclick="logout()">🚪 Sair</button>
 
 <h3>📊 Mapeamentos Ativos</h3>
 <div id="lista"></div>
@@ -122,22 +157,27 @@ collection, addDoc, getDocs, query, orderBy, serverTimestamp
 const lista = document.getElementById("lista");
 
 onAuthStateChanged(auth, async (user) => {
-  if (!user) window.location.href = "login.html";
-  else carregarMapeamentos();
+  if (!user) {
+    window.location.href = "login.html";
+  } else {
+    carregarMapeamentos();
+  }
 });
 
 window.logout = function() {
-  signOut(auth).then(() => window.location.href = "login.html");
+  signOut(auth).then(() => {
+    window.location.href = "login.html";
+  });
 };
 
 window.criarMapeamento = async function() {
 
-  const armazem = armazem.value;
-  const cliente = cliente.value;
-  const limite = parseInt(document.getElementById("limite").value);
-  const analista = analista.value;
+  const armazem = document.getElementById("armazem").value;
+  const cliente = document.getElementById("cliente").value;
+  const limite = parseFloat(document.getElementById("limite").value);
+  const analista = document.getElementById("analista").value;
 
-  if (!armazem || !cliente || !analista) {
+  if (!armazem || !cliente || !analista || !limite) {
     alert("Preencha todos os campos.");
     return;
   }
@@ -151,6 +191,11 @@ window.criarMapeamento = async function() {
     status: "ativo",
     possuiNC: false
   });
+
+  document.getElementById("armazem").value = "";
+  document.getElementById("cliente").value = "";
+  document.getElementById("limite").value = "";
+  document.getElementById("analista").value = "";
 
   carregarMapeamentos();
 };
@@ -166,6 +211,7 @@ async function carregarMapeamentos() {
 
     const data = docSnap.data();
     const id = docSnap.id;
+
     const classe = data.possuiNC ? "status-nc" : "status-ok";
 
     lista.innerHTML += `
@@ -183,8 +229,9 @@ async function carregarMapeamentos() {
   });
 }
 
-window.abrirMapeamento = id =>
+window.abrirMapeamento = function(id) {
   window.location.href = `amostras.html?id=${id}`;
+};
 
 </script>
 
