@@ -3,20 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <title>Dashboard - InsoMetric</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    button { padding: 8px 12px; margin: 5px 0; }
+    .card { border: 1px solid #ccc; padding: 10px; margin: 5px 0; }
+  </style>
 </head>
 <body>
-  <h1>Login realizado com sucesso 🚀</h1>
 
+  <h2>InsoMetric - Mapeamentos</h2>
+
+  <button onclick="criarMapeamento()">➕ Novo Mapeamento</button>
   <button onclick="logout()">Sair</button>
 
-  <script type="module">
-    import { auth } from "./js/firebase-config.js";
-    import { onAuthStateChanged, signOut } 
-      from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+  <hr>
 
-    onAuthStateChanged(auth, (user) => {
+  <div id="lista"></div>
+
+  <script type="module">
+    import { auth, db } from "./js/firebase-config.js";
+    import { onAuthStateChanged, signOut }
+      from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+    import {
+      collection,
+      addDoc,
+      getDocs,
+      query,
+      orderBy,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+    const lista = document.getElementById("lista");
+
+    onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = "login.html";
+      } else {
+        carregarMapeamentos();
       }
     });
 
@@ -25,6 +48,35 @@
         window.location.href = "login.html";
       });
     };
+
+    window.criarMapeamento = async function() {
+      const nome = prompt("Nome do Armazém:");
+      if (!nome) return;
+
+      await addDoc(collection(db, "mapeamentos"), {
+        armazem: nome,
+        criadoEm: serverTimestamp(),
+        status: "ativo"
+      });
+
+      carregarMapeamentos();
+    };
+
+    async function carregarMapeamentos() {
+      lista.innerHTML = "";
+      const q = query(collection(db, "mapeamentos"), orderBy("criadoEm", "desc"));
+      const snapshot = await getDocs(q);
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        lista.innerHTML += `
+          <div class="card">
+            <strong>${data.armazem}</strong><br>
+            Status: ${data.status}
+          </div>
+        `;
+      });
+    }
   </script>
 
 </body>
