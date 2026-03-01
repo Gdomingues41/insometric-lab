@@ -3,36 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>InsoMetric - Painel Industrial</title>
+<title>InsoMetric - Painel</title>
 
 <style>
+
+:root {
+  --bg: #121212;
+  --card: #2A2F38;
+  --text: #EAEAEA;
+  --input-bg: #1C1F26;
+  --border: #444;
+  --primary: #0B3D91;
+}
+
+body.light {
+  --bg: #F4F6F7;
+  --card: #ffffff;
+  --text: #2C3E50;
+  --input-bg: #ffffff;
+  --border: #ccc;
+  --primary: #1B4F72;
+}
 
 body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 15px;
-  background-color: #121212;
-  color: #EAEAEA;
+  background-color: var(--bg);
+  color: var(--text);
+  transition: 0.3s;
 }
 
-h2 {
-  font-size: 22px;
-  margin-bottom: 15px;
-  color: #ffffff;
-}
+h2, h3 { color: var(--text); }
 
-h3 {
-  font-size: 18px;
-  margin-bottom: 10px;
-  color: #ffffff;
-}
-
-.box {
-  background: #2A2F38;
+.box, .card {
+  background: var(--card);
   padding: 18px;
   border-radius: 10px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
 
 input, select {
@@ -41,74 +50,42 @@ input, select {
   margin: 8px 0;
   font-size: 16px;
   border-radius: 8px;
-  border: 1px solid #444;
-  background-color: #1C1F26;
-  color: white;
+  border: 1px solid var(--border);
+  background-color: var(--input-bg);
+  color: var(--text);
 }
 
 button {
   width: 100%;
-  padding: 16px;
+  padding: 14px;
   font-size: 16px;
   border-radius: 8px;
   border: none;
-  margin-top: 12px;
+  margin-top: 10px;
   cursor: pointer;
-  background-color: #0B3D91;
+  background-color: var(--primary);
   color: white;
   font-weight: bold;
 }
 
-button:hover {
-  opacity: 0.9;
+.toggle {
+  background-color: #555;
 }
 
-.card {
-  background: #2A2F38;
-  padding: 18px;
-  border-radius: 10px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-  font-size: 15px;
-  line-height: 1.6;
-}
-
-.card strong {
-  font-size: 18px;
-  display: block;
-  margin-bottom: 6px;
-}
-
-.status-nc {
-  border-left: 6px solid #E74C3C;
-}
-
-.status-ok {
-  border-left: 6px solid #2ECC71;
-}
-
-.logout-btn {
-  background-color: #444;
-}
+.status-nc { border-left: 6px solid #E74C3C; }
+.status-ok { border-left: 6px solid #2ECC71; }
 
 @media (min-width: 768px) {
-
-  body {
-    max-width: 900px;
-    margin: auto;
-  }
-
-  button {
-    width: auto;
-    padding: 12px 20px;
-  }
-
+  body { max-width: 900px; margin: auto; }
+  button { width: auto; }
 }
 
 </style>
 </head>
 
 <body>
+
+<button class="toggle" onclick="toggleTheme()">🌙 / ☀️ Alternar Tema</button>
 
 <h2>📦 InsoMetric - Painel do Dia</h2>
 
@@ -128,7 +105,7 @@ button:hover {
 <button onclick="criarMapeamento()">Salvar Mapeamento</button>
 </div>
 
-<button class="logout-btn" onclick="logout()">🚪 Sair</button>
+<button onclick="logout()">🚪 Sair</button>
 
 <h3>📊 Mapeamentos Ativos</h3>
 <div id="lista"></div>
@@ -139,36 +116,26 @@ import { auth, db } from "./js/firebase-config.js";
 import { onAuthStateChanged, signOut }
 from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import {
-collection,
-addDoc,
-getDocs,
-query,
-orderBy,
-serverTimestamp
+collection, addDoc, getDocs, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const lista = document.getElementById("lista");
 
 onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = "login.html";
-  } else {
-    carregarMapeamentos();
-  }
+  if (!user) window.location.href = "login.html";
+  else carregarMapeamentos();
 });
 
 window.logout = function() {
-  signOut(auth).then(() => {
-    window.location.href = "login.html";
-  });
+  signOut(auth).then(() => window.location.href = "login.html");
 };
 
 window.criarMapeamento = async function() {
 
-  const armazem = document.getElementById("armazem").value;
-  const cliente = document.getElementById("cliente").value;
+  const armazem = armazem.value;
+  const cliente = cliente.value;
   const limite = parseInt(document.getElementById("limite").value);
-  const analista = document.getElementById("analista").value;
+  const analista = analista.value;
 
   if (!armazem || !cliente || !analista) {
     alert("Preencha todos os campos.");
@@ -185,10 +152,6 @@ window.criarMapeamento = async function() {
     possuiNC: false
   });
 
-  document.getElementById("armazem").value = "";
-  document.getElementById("cliente").value = "";
-  document.getElementById("analista").value = "";
-
   carregarMapeamentos();
 };
 
@@ -203,7 +166,6 @@ async function carregarMapeamentos() {
 
     const data = docSnap.data();
     const id = docSnap.id;
-
     const classe = data.possuiNC ? "status-nc" : "status-ok";
 
     lista.innerHTML += `
@@ -211,8 +173,7 @@ async function carregarMapeamentos() {
         <strong>${data.armazem}</strong>
         Cliente: ${data.cliente}<br>
         Limite: ${data.limite} mg/kg<br>
-        Analista: ${data.analista}<br>
-        Status: ${data.status}<br><br>
+        Analista: ${data.analista}<br><br>
 
         <button onclick="abrirMapeamento('${id}')">
           Abrir Análises
@@ -222,10 +183,24 @@ async function carregarMapeamentos() {
   });
 }
 
-window.abrirMapeamento = function(id) {
-  window.location.href = \`amostras.html?id=\${id}\`;
-};
+window.abrirMapeamento = id =>
+  window.location.href = `amostras.html?id=${id}`;
 
+</script>
+
+<script>
+function toggleTheme() {
+  document.body.classList.toggle("light");
+  localStorage.setItem("theme",
+    document.body.classList.contains("light") ? "light" : "dark");
+}
+
+window.onload = function() {
+  const theme = localStorage.getItem("theme");
+  if (theme === "light") {
+    document.body.classList.add("light");
+  }
+};
 </script>
 
 </body>
