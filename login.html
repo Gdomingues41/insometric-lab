@@ -3,98 +3,127 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login - InsoMetric</title>
-
-<link rel="icon" href="img/logo-insometric.png">
+<title>InsoMetric - Login</title>
 
 <style>
-*{box-sizing:border-box}
-body{
-margin:0;
-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
-background:#EAECEE;
-font-family:Arial;
+:root {
+    --azul-principal: #1f3f75;
+    --azul-hover: #16325e;
+    --cinza-fundo: #f2f4f7;
+    --cinza-card: #ffffff;
+    --texto-secundario: #555;
 }
 
-.login-box{
-background:white;
-padding:40px;
-border-radius:12px;
-box-shadow:0 5px 20px rgba(0,0,0,0.1);
-width:100%;
-max-width:400px;
-text-align:center;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
-.logo{
-width:120px;
-margin-bottom:20px;
+body {
+    background-color: var(--cinza-fundo);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 15px;
 }
 
-h2{
-margin:10px 0;
+.container {
+    background: var(--cinza-card);
+    padding: 40px 30px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
 }
 
-input{
-width:100%;
-padding:12px;
-margin:8px 0;
-border-radius:6px;
-border:1px solid #ccc;
-font-size:16px;
+.logo-login {
+    width: 170px;
+    margin-bottom: 15px;
 }
 
-button{
-width:100%;
-padding:12px;
-margin-top:10px;
-background:#0B3D91;
-border:none;
-color:white;
-border-radius:6px;
-font-size:16px;
-cursor:pointer;
+h1 {
+    font-size: 26px;
+    margin-bottom: 8px;
+    color: #000;
 }
 
-button:hover{
-opacity:0.9;
+.subtitulo {
+    font-size: 15px;
+    color: var(--texto-secundario);
+    margin-bottom: 25px;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--azul-principal);
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    background-color: var(--azul-principal);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background-color: var(--azul-hover);
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 30px 20px;
+    }
+
+    .logo-login {
+        width: 140px;
+    }
+
+    h1 {
+        font-size: 22px;
+    }
+
+    .subtitulo {
+        font-size: 14px;
+    }
 }
 </style>
 </head>
 
 <body>
 
-<div class="login-box">
+<div class="container">
 
-<img src="img/logo-insometric.png" class="logo">
+    <img src="img/logo-insometric.png" alt="InsoMetric Logo" class="logo-login">
 
-<h2>InsoMetric</h2>
-<p>Sistema de Monitoramento de Resíduo Insolúvel</p>
+    <h1>InsoMetric</h1>
+    <p class="subtitulo">
+        Sistema Técnico de Monitoramento de Resíduo Insolúvel
+    </p>
 
-<input type="email" id="email" placeholder="E-mail">
-<input type="password" id="password" placeholder="Senha">
+    <input type="email" placeholder="E-mail">
+    <input type="password" placeholder="Senha">
 
-<button onclick="login()">Entrar</button>
+    <button>Entrar</button>
 
 </div>
-
-<script type="module">
-import { auth } from "./js/firebase-config.js";
-import { signInWithEmailAndPassword }
-from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-
-window.login = function(){
-const email=document.getElementById("email").value;
-const password=document.getElementById("password").value;
-
-signInWithEmailAndPassword(auth,email,password)
-.then(()=>window.location.href="dashboard.html")
-.catch((error)=>alert(error.message));
-}
-</script>
 
 </body>
 </html>
