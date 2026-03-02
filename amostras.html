@@ -6,140 +6,104 @@
 <title>InsoMetric - Análises</title>
 
 <style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;overflow-x:hidden;font-family:Arial}
 
-/* ===== RESET ===== */
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; overflow-x: hidden; }
-
-/* ===== VARIÁVEIS ===== */
-:root {
-  --bg: #121212;
-  --card: #2A2F38;
-  --text: #EAEAEA;
-  --input-bg: #1C1F26;
-  --border: #444;
-  --primary: #0B3D91;
+:root{
+--bg:#121212;
+--card:#2A2F38;
+--text:#EAEAEA;
+--input:#1C1F26;
+--border:#444;
+--primary:#0B3D91;
 }
 
-/* ===== LIGHT EXECUTIVO ===== */
-body.light {
-  --bg: #F4F6F9;
-  --card: #FFFFFF;
-  --text: #2C3E50;
-  --input-bg: #FFFFFF;
-  --border: #D5D8DC;
-  --primary: #1B4F72;
+body.light{
+--bg:#F4F6F9;
+--card:#FFFFFF;
+--text:#2C3E50;
+--input:#FFFFFF;
+--border:#D5D8DC;
+--primary:#1B4F72;
 }
 
-/* ===== BASE ===== */
-body {
-  font-family: Arial, sans-serif;
-  padding: 15px;
-  background-color: var(--bg);
-  color: var(--text);
-  transition: 0.3s;
+body{
+background:var(--bg);
+color:var(--text);
+padding:15px;
+transition:.3s;
 }
 
-h2 { margin-bottom: 15px; }
-h3 { margin-bottom: 10px; }
-
-/* ===== CARDS ===== */
-.box {
-  background: var(--card);
-  padding: 18px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+.box{
+background:var(--card);
+padding:18px;
+border-radius:10px;
+margin-bottom:20px;
 }
 
-/* ===== INPUTS ===== */
-input, select {
-  width: 100%;
-  padding: 14px;
-  margin: 8px 0;
-  font-size: 16px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background-color: var(--input-bg);
-  color: var(--text);
+input,select{
+width:100%;
+padding:14px;
+margin:8px 0;
+font-size:16px;
+border-radius:8px;
+border:1px solid var(--border);
+background:var(--input);
+color:var(--text);
 }
 
-/* ===== BOTÕES ===== */
-button {
-  width: 100%;
-  padding: 14px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  margin-top: 10px;
-  cursor: pointer;
-  background-color: var(--primary);
-  color: white;
-  font-weight: bold;
+button{
+width:100%;
+padding:14px;
+border:none;
+border-radius:8px;
+margin-top:10px;
+cursor:pointer;
+font-weight:bold;
+background:var(--primary);
+color:white;
 }
 
-button:hover { opacity: 0.9; }
-
-.delete-btn {
-  background-color: #E74C3C;
-  width: auto;
-  padding: 6px 10px;
-  font-size: 13px;
+.delete-btn{
+background:#E74C3C;
+width:auto;
+padding:6px 10px;
+font-size:13px;
 }
 
-/* ===== TABELA ===== */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
+.result-preview{
+padding:12px;
+margin-top:10px;
+border-radius:8px;
+font-weight:bold;
 }
 
-th, td {
-  padding: 10px;
-  border: 1px solid var(--border);
-  text-align: center;
+.ok{background:#1f3a2a;color:#b6ffcf}
+.nc{background:#3a1f1f;color:#ffb3b3}
+
+body.light .ok{background:#EAFAF1;color:#1E8449}
+body.light .nc{background:#FDEDEC;color:#922B21}
+
+table{
+width:100%;
+border-collapse:collapse;
+font-size:14px;
 }
 
-th {
-  background-color: var(--primary);
-  color: white;
-  font-weight: bold;
+th,td{
+padding:10px;
+border:1px solid var(--border);
+text-align:center;
 }
 
-/* ===== STATUS DARK ===== */
-.status-nc {
-  background-color: #3a1f1f;
-  color: #ffb3b3;
+th{
+background:var(--primary);
+color:white;
 }
 
-.status-ok {
-  background-color: #1f3a2a;
-  color: #b6ffcf;
+@media(min-width:768px){
+body{max-width:1000px;margin:auto}
 }
-
-/* ===== STATUS LIGHT EXECUTIVO ===== */
-body.light .status-nc {
-  background-color: #FDEDEC;
-  color: #922B21;
-  font-weight: 600;
-}
-
-body.light .status-ok {
-  background-color: #EAFAF1;
-  color: #1E8449;
-  font-weight: 600;
-}
-
-.resumo {
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-/* ===== RESPONSIVO ===== */
-@media (min-width: 768px) {
-  body { max-width: 1000px; margin: auto; }
-}
-
 </style>
 </head>
 
@@ -150,6 +114,12 @@ body.light .status-ok {
 <div id="info" class="box"></div>
 
 <div class="box">
+<h3>Limite Técnico</h3>
+<input type="number" id="limiteInput" placeholder="Limite mg/kg">
+<button onclick="atualizarLimite()">Atualizar Limite</button>
+</div>
+
+<div class="box">
 <h3>Nova Amostra</h3>
 
 <input type="number" step="0.0001" id="pesoInicial" placeholder="Peso Inicial Membrana (g)">
@@ -157,10 +127,14 @@ body.light .status-ok {
 <input type="number" step="0.01" id="massa" placeholder="Massa analisada (g)">
 
 <select id="observacao">
-  <option value="Ausente">Ausente</option>
-  <option value="Presença leve">Presença leve</option>
-  <option value="Presença significativa">Presença significativa</option>
+<option>Ausente</option>
+<option>Presença leve</option>
+<option>Presença significativa</option>
 </select>
+
+<button onclick="calcularResultado()">Calcular Resultado</button>
+
+<div id="preview" style="display:none" class="result-preview"></div>
 
 <label>Foto Membrana</label>
 <input type="file" id="fotoMembrana" accept="image/*" capture="environment">
@@ -173,7 +147,7 @@ body.light .status-ok {
 </div>
 
 <div class="box">
-<div id="resumo" class="resumo"></div>
+<div id="resumo"></div>
 
 <table>
 <thead>
@@ -181,7 +155,6 @@ body.light .status-ok {
 <th>Data</th>
 <th>mg/kg</th>
 <th>Status</th>
-<th>Fotos</th>
 <th>Ações</th>
 </tr>
 </thead>
@@ -192,36 +165,34 @@ body.light .status-ok {
 <button onclick="voltar()">← Voltar</button>
 
 <script type="module">
-
 import { auth, db } from "./js/firebase-config.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject }
 from "https://www.gstatic.com/firebasejs/12.10.0/firebase-storage.js";
 import { onAuthStateChanged }
 from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import {
-doc, getDoc, collection, addDoc,
-serverTimestamp, getDocs, updateDoc, deleteDoc
+doc,getDoc,collection,addDoc,
+serverTimestamp,getDocs,updateDoc,deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-const storage = getStorage();
-const params = new URLSearchParams(window.location.search);
-const id = params.get("id");
+const storage=getStorage();
+const params=new URLSearchParams(window.location.search);
+const id=params.get("id");
 
-let limiteAtual = 0;
+let limiteAtual=0;
+let resultadoCalculado=null;
+let statusCalculado=null;
 
-onAuthStateChanged(auth, async (user) => {
-if (!user) {
-window.location.href = "login.html";
-return;
-}
+onAuthStateChanged(auth,async(user)=>{
+if(!user){window.location.href="login.html";return;}
 
-const docSnap = await getDoc(doc(db, "mapeamentos", id));
-if (!docSnap.exists()) return;
+const snap=await getDoc(doc(db,"mapeamentos",id));
+const data=snap.data();
+limiteAtual=data.limite;
 
-const data = docSnap.data();
-limiteAtual = data.limite;
+document.getElementById("limiteInput").value=limiteAtual;
 
-document.getElementById("info").innerHTML =
+document.getElementById("info").innerHTML=
 `<strong>Armazém:</strong> ${data.armazem}<br>
 <strong>Cliente:</strong> ${data.cliente}<br>
 <strong>Limite:</strong> ${data.limite} mg/kg`;
@@ -229,118 +200,85 @@ document.getElementById("info").innerHTML =
 carregarAmostras();
 });
 
-window.salvarAmostra = async function(event) {
+window.atualizarLimite=async function(){
+const novo=parseFloat(limiteInput.value);
+if(isNaN(novo)){alert("Valor inválido");return;}
+await updateDoc(doc(db,"mapeamentos",id),{limite:novo});
+limiteAtual=novo;
+alert("Limite atualizado.");
+};
 
-const botao = event.target;
-botao.disabled = true;
-botao.innerText = "Salvando...";
+window.calcularResultado=function(){
+const pi=parseFloat(pesoInicial.value);
+const pf=parseFloat(pesoFinal.value);
+const massa=parseFloat(document.getElementById("massa").value);
 
-const pi = parseFloat(pesoInicial.value);
-const pf = parseFloat(pesoFinal.value);
-const massa = parseFloat(document.getElementById("massa").value);
-
-if (isNaN(pi) || isNaN(pf) || isNaN(massa)) {
+if(isNaN(pi)||isNaN(pf)||isNaN(massa)){
 alert("Preencha corretamente.");
-botao.disabled = false;
-botao.innerText = "Salvar Amostra";
 return;
 }
 
-const resultado = Math.round(((pf - pi) * 1000000) / massa);
-const status = resultado > limiteAtual ? "Não Conforme" : "Conforme";
+resultadoCalculado=Math.round(((pf-pi)*1000000)/massa);
+statusCalculado=resultadoCalculado>limiteAtual?"Não Conforme":"Conforme";
 
-const docRef = await addDoc(
-collection(db, "mapeamentos", id, "amostras"),
+const preview=document.getElementById("preview");
+preview.style.display="block";
+preview.className="result-preview "+(statusCalculado==="Não Conforme"?"nc":"ok");
+preview.innerHTML=
+`Resultado: ${resultadoCalculado} mg/kg<br>Status: ${statusCalculado}`;
+};
+
+window.salvarAmostra=async function(event){
+
+if(resultadoCalculado===null){
+alert("Calcule antes de salvar.");
+return;
+}
+
+const botao=event.target;
+botao.disabled=true;
+botao.innerText="Salvando...";
+
+const docRef=await addDoc(
+collection(db,"mapeamentos",id,"amostras"),
 {
-pesoInicial: pi,
-pesoFinal: pf,
-massa,
-resultadoMgKg: resultado,
-status,
-criadoEm: serverTimestamp()
+resultadoMgKg:resultadoCalculado,
+status:statusCalculado,
+criadoEm:serverTimestamp()
 });
 
-async function uploadFoto(inputId, nomeArquivo) {
-const file = document.getElementById(inputId).files[0];
-if (!file) return null;
-const storageRef = ref(storage,
-`mapeamentos/${id}/amostras/${docRef.id}/${nomeArquivo}`);
-await uploadBytes(storageRef, file);
-return await getDownloadURL(storageRef);
-}
+botao.disabled=false;
+botao.innerText="Salvar Amostra";
 
-const urlMembrana = await uploadFoto("fotoMembrana", "membrana.jpg");
-const urlBequer = await uploadFoto("fotoBequer", "bequer.jpg");
-
-await updateDoc(docRef, {
-fotoMembrana: urlMembrana,
-fotoBequer: urlBequer
-});
-
-if (status === "Não Conforme") {
-await updateDoc(doc(db, "mapeamentos", id), {
-possuiNC: true
-});
-}
-
-/* Limpar */
-pesoInicial.value = "";
-pesoFinal.value = "";
-massa.value = "";
-fotoMembrana.value = "";
-fotoBequer.value = "";
-
-botao.disabled = false;
-botao.innerText = "Salvar Amostra";
+preview.style.display="none";
+resultadoCalculado=null;
 
 carregarAmostras();
 };
 
-window.excluirAmostra = async function(amostraId) {
-
-if (!confirm("Excluir esta amostra?")) return;
-
-await deleteDoc(doc(db, "mapeamentos", id, "amostras", amostraId));
-
-try {
-await deleteObject(ref(storage,
-`mapeamentos/${id}/amostras/${amostraId}/membrana.jpg`));
-} catch(e){}
-
-try {
-await deleteObject(ref(storage,
-`mapeamentos/${id}/amostras/${amostraId}/bequer.jpg`));
-} catch(e){}
-
+window.excluirAmostra=async function(amostraId){
+if(!confirm("Excluir amostra?"))return;
+await deleteDoc(doc(db,"mapeamentos",id,"amostras",amostraId));
 carregarAmostras();
 };
 
-async function carregarAmostras() {
+async function carregarAmostras(){
+const snapshot=await getDocs(collection(db,"mapeamentos",id,"amostras"));
+const lista=document.getElementById("listaAmostras");
+lista.innerHTML="";
+let total=0;
+let totalNC=0;
 
-const snapshot = await getDocs(collection(db, "mapeamentos", id, "amostras"));
-const lista = document.getElementById("listaAmostras");
-lista.innerHTML = "";
-
-let total = 0;
-let totalNC = 0;
-
-snapshot.forEach(docSnap => {
-
-const d = docSnap.data();
+snapshot.forEach(docSnap=>{
+const d=docSnap.data();
 total++;
-if (d.status === "Não Conforme") totalNC++;
+if(d.status==="Não Conforme")totalNC++;
 
-const classe = d.status === "Não Conforme" ? "status-nc" : "status-ok";
-
-lista.innerHTML += `
-<tr class="${classe}">
-<td>${d.criadoEm?.toDate().toLocaleString() || "-"}</td>
+lista.innerHTML+=`
+<tr>
+<td>${d.criadoEm?.toDate().toLocaleString()||"-"}</td>
 <td>${d.resultadoMgKg}</td>
 <td>${d.status}</td>
-<td>
-${d.fotoMembrana ? `<a href="${d.fotoMembrana}" target="_blank">Membrana</a><br>` : ""}
-${d.fotoBequer ? `<a href="${d.fotoBequer}" target="_blank">Béquer</a>` : ""}
-</td>
 <td>
 <button class="delete-btn"
 onclick="excluirAmostra('${docSnap.id}')">🗑</button>
@@ -348,18 +286,15 @@ onclick="excluirAmostra('${docSnap.id}')">🗑</button>
 </tr>`;
 });
 
-document.getElementById("resumo").innerHTML =
+document.getElementById("resumo").innerHTML=
 `Total: ${total} | Não Conformes: ${totalNC}`;
 }
 
-window.voltar = () =>
-window.location.href = "dashboard.html";
-
+window.voltar=()=>window.location.href="dashboard.html";
 </script>
 
 <script>
-const theme = localStorage.getItem("theme");
-if (theme === "light") {
+if(localStorage.getItem("theme")==="light"){
 document.body.classList.add("light");
 }
 </script>
