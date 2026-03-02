@@ -1,26 +1,100 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - InsoMetric</title>
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - InsoMetric</title>
+
+<link rel="icon" href="img/logo-insometric.png">
+
+<style>
+*{box-sizing:border-box}
+body{
+margin:0;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:#EAECEE;
+font-family:Arial;
+}
+
+.login-box{
+background:white;
+padding:40px;
+border-radius:12px;
+box-shadow:0 5px 20px rgba(0,0,0,0.1);
+width:100%;
+max-width:400px;
+text-align:center;
+}
+
+.logo{
+width:120px;
+margin-bottom:20px;
+}
+
+h2{
+margin:10px 0;
+}
+
+input{
+width:100%;
+padding:12px;
+margin:8px 0;
+border-radius:6px;
+border:1px solid #ccc;
+font-size:16px;
+}
+
+button{
+width:100%;
+padding:12px;
+margin-top:10px;
+background:#0B3D91;
+border:none;
+color:white;
+border-radius:6px;
+font-size:16px;
+cursor:pointer;
+}
+
+button:hover{
+opacity:0.9;
+}
+</style>
 </head>
+
 <body>
 
-  <div class="login-container">
-    <h1>InsoMetric</h1>
-    <p>Sistema de Monitoramento de Resíduo Insolúvel</p>
+<div class="login-box">
 
-    <input type="email" id="email" placeholder="E-mail">
-    <input type="password" id="password" placeholder="Senha">
+<img src="img/logo-insometric.png" class="logo">
 
-    <button onclick="login()">Entrar</button>
-    <p id="error" class="erro"></p>
-  </div>
+<h2>InsoMetric</h2>
+<p>Sistema de Monitoramento de Resíduo Insolúvel</p>
 
-  <script type="module" src="js/firebase-config.js"></script>
-  <script type="module" src="js/auth.js"></script>
+<input type="email" id="email" placeholder="E-mail">
+<input type="password" id="password" placeholder="Senha">
+
+<button onclick="login()">Entrar</button>
+
+</div>
+
+<script type="module">
+import { auth } from "./js/firebase-config.js";
+import { signInWithEmailAndPassword }
+from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+window.login = function(){
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
+
+signInWithEmailAndPassword(auth,email,password)
+.then(()=>window.location.href="dashboard.html")
+.catch((error)=>alert(error.message));
+}
+</script>
 
 </body>
 </html>
